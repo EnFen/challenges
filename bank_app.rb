@@ -1,8 +1,9 @@
-balance = 0
+balance = File.open('balance.txt').to_i
 password = 'password'
 choice = ''
 clear_code = "\e[H\e[2J"
 history = []
+# balance = read file
 
 puts clear_code
 =begin
@@ -12,7 +13,6 @@ puts clear_code
     
 =end
 while choice != 'exit'
-    #puts clear_code
     puts "What would you like to do?"
     puts 'Type "balance" to view your balance'
     puts 'Type "deposit" to make a deposit'
@@ -58,8 +58,7 @@ while choice != 'exit'
             puts ''
             t = Time.now
             history.push(["#{t.day}/#{t.mon}/#{t.year} #{t.hour}:#{t.min}.#{t.sec}","Withdrawal: $-#{withdraw}"])
-        end
-        
+        end        
     when 'history'
         history.each { |v| 
         puts v 
@@ -67,6 +66,13 @@ while choice != 'exit'
         }
         puts ''
     when 'exit'
+        # write balance to file on exit. call file balance.txt to start; maybe change name of file based on user later?
+        #f = File.new('balance.txt', 'w')
+        #f.write(balance)
+        #f.close 
+        open('balance.txt', 'w') { |f|
+        f.puts balance.to_s
+        }  
         exit
     else
         puts "Sorry, your selection was invalid"
