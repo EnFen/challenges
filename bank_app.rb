@@ -1,17 +1,46 @@
-balance = File.open('balance.txt').to_i
-password = 'password'
 choice = ''
 clear_code = "\e[H\e[2J"
-history = []
-# balance = read file
+
+begin
+    user_hash = eval(File.read('balance.txt'))
+    
+rescue Errno::ENOENT => e
+    user_hash = {}
+end
 
 puts clear_code
-=begin
-    ask for user name
-    if username does not exist, add user and ask for password input. Store name and password
-    if username does exist, verify user with password. if password matches stored value, allow access
-    
-=end
+
+pass_entry = false
+
+while !pass_entry
+    puts "Please enter your username"
+    user = gets.chomp
+
+    if !user_hash[user]
+        user_hash[user] = {}
+        puts 'Please select a password for your new account'
+        password = user_hash[user]['password'] = gets.chomp
+        user_hash[user]['balance'] = 0
+        history = user_hash[user]['history'] = []
+        pass_entry = true
+        puts clear_code
+    else
+        puts "Please enter your password"
+        pass_entry = gets.chomp
+        password = user_hash[user]['password']
+        history = user_hash[user]['history']
+        if pass_entry == password
+            pass_entry = true
+            puts clear_code            
+        else
+            puts clear_code
+            puts "Incorrect password"
+            puts ''
+            pass_entry = false            
+        end
+    end
+end
+
 while choice != 'exit'
     puts "What would you like to do?"
     puts 'Type "balance" to view your balance'
@@ -23,21 +52,14 @@ while choice != 'exit'
 
     case choice
     when 'balance'
-        puts "Please enter your password"
-        pass_entry = gets.downcase.chomp
-        if pass_entry == password
-            puts clear_code
-            puts "Your balance is $#{balance}"
-            puts ''            
-        else
-            puts clear_code
-            puts "Incorrect password"            
-        end
+        puts clear_code
+        puts "Your balance is $#{user_hash[user]['balance']}"
+        puts ''
     when 'deposit'
         puts ''
         puts 'How much would you like to deposit?'
         deposit = gets.chomp.to_i
-        balance += deposit
+        user_hash[user]['balance'] += deposit
         puts clear_code
         puts "You have successfully deposited $#{deposit}"
         puts ''
@@ -47,12 +69,12 @@ while choice != 'exit'
         puts ''
         puts 'How much would you like to withdraw?'
         withdraw = gets.chomp.to_i
-        if withdraw > balance
+        if withdraw > user_hash[user]['balance']
             puts clear_code
             puts 'That amount exceeds your balance'
             puts ''
         else
-            balance -= withdraw
+            user_hash[user]['balance'] -= withdraw
             puts clear_code
             puts "You have successfully withdrawn $#{withdraw}"
             puts ''
@@ -66,12 +88,9 @@ while choice != 'exit'
         }
         puts ''
     when 'exit'
-        # write balance to file on exit. call file balance.txt to start; maybe change name of file based on user later?
-        #f = File.new('balance.txt', 'w')
-        #f.write(balance)
-        #f.close 
-        open('balance.txt', 'w') { |f|
-        f.puts balance.to_s
+        File.open('balance.txt', 'w') { |f|
+        #f.puts balance
+        f.puts user_hash
         }  
         exit
     else
