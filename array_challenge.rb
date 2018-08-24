@@ -13,8 +13,7 @@ puts ''
 four_letter_animals.reverse!
 puts four_letter_animals
 puts ''
-four_letter_animals.insert(four_letter_animals.index('Elephant'), 'Foal').delete('Elephant')
-puts four_letter_animals
+four_letter_animals.insert(four_letter_animals.index('Elephant'), 'Foal').delete('Elephant') #Also use four_letter_animals[four_letter_animals.index('Elephant')] = 'Foal'
 puts ''
 four_letter_animals << 'Bear'
 puts four_letter_animals
@@ -35,7 +34,7 @@ groc_list = []
     number = false
     while number == false
         puts 'How many of these items would you like?'
-        number = Integer(gets.chomp) rescue false
+        number = Integer(gets.chomp) rescue false # could also use number = eval(gets.chomp) rescue false
         if !number
             puts ''
             puts 'Please provide an amount as a number'
