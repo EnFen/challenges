@@ -50,7 +50,7 @@ while choice != 'exit'
     puts 'Type "exit" to end'
     choice = gets.downcase.chomp    
 
-    case choice
+case choice
     when 'balance'
         puts clear_code
         puts "Your balance is $#{user_hash[user]['balance']}"
