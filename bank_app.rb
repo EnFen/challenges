@@ -88,10 +88,7 @@ case choice
         }
         puts ''
     when 'exit'
-        File.open('balance.txt', 'w') { |f|
-        #f.puts balance
-        f.puts user_hash
-        }  
+        File.write('balance.txt', user_hash) 
         exit
     else
         puts "Sorry, your selection was invalid"
