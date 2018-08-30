@@ -1,0 +1,1 @@
+{"fred":{"password":"1234","balance":105,"history":[["30/8/2018 10:44.52","Deposit: $10"],["30/8/2018 10:45.5","Withdrawal: $-5"],["30/8/2018 11:6.45","Deposit: $100"]]},"judy":{"password":"2345","balance":50,"history":[["30/8/2018 10:48.18","Deposit: $50"]]}}
