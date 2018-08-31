@@ -1,67 +1,118 @@
-class Account   
-    def initialize
+require 'json'
+
+class UI
+    def start_line
+        puts "\e[H\e[2J"
         puts ''
-        print "Please enter your username?: " 
+    end
 
-        @user = gets.chomp.downcase.to_sym
+    def new_line
+        puts ''
+    end
 
-        require 'json'
+    def prompt(input)
+        start_line
+        if input.is_a? String
+            print input.capitalize
+        else
+            print input
+        end
+        return gets.chomp
+        new_line
+    end
 
+    def menu(array)
+        #start_line
+        new_line
+        for line in array
+            puts line.capitalize
+        end
+        new_line
+        return gets.chomp        
+    end
+
+    def message(input)
+        start_line
+        puts input.capitalize
+        #new_line
+    end
+
+    def list(input)
+        new_line
+        puts input
+    end
+
+end
+
+class User
+    attr_reader :interface, :username, :user_data, :balance, :history
+    def initialize
+        @interface = UI.new
+        @username = @interface.prompt("Please enter your username?: ").downcase.to_sym
+        
         begin
             @user_data = JSON.parse( File.read('user_data.txt'), :symbolize_names => true )
         rescue Errno::ENOENT => e
             @user_data = {}
         end
 
-        @clear_code = "\e[H\e[2J"
-        @pass_entry = false
+        verify_or_new        
 
-        pass_check(@user)
+        account = Account.new(self)
+        account.options
+
     end
 
-    def pass_check(user)
+    def verify_or_new
+        @pass_entry = false
         while !@pass_entry
-            if !@user_data[user]
-                @user_data[user] = {}
-                print 'Please select a password for your new account: '
-                @password = @user_data[user][:password] = gets.chomp
-                @user_data[user][:balance] = 0
-                @history = @user_data[user][:history] = []
-                @pass_entry = true
-                puts @clear_code
+            if !@user_data[@username]
+                create_new_user(@username)
             else
-                print "Please enter your password: "
-                @pass_entry = gets.chomp
-                @password = @user_data[user][:password]
-                @history = @user_data[user][:history]
-                if @pass_entry == @password
-                    @pass_entry = true
-                    puts @clear_code            
-                else
-                    puts @clear_code
-                    puts "Incorrect password"
-                    puts ''
-                    pass_entry = false            
-                end
+                verify_user(@username)
             end
         end
-       options
+       @balance = @user_data[@username][:balance]
+    end
+
+    def create_new_user(user)
+        @user_data[user] = {}
+        @password = @user_data[user][:password] = @interface.prompt( "Please select a password for your new account: " )
+        @user_data[user][:balance] = 0
+        @history = @user_data[user][:history] = []
+        @pass_entry = true
+    end
+
+    def verify_user(user)
+        @pass_entry = @interface.prompt( "Please enter your password: " )
+        @password = @user_data[user][:password]
+        @history = @user_data[user][:history]
+        if @pass_entry == @password
+            @pass_entry = true           
+        else
+            @interface.message( "Incorrect password" )
+            @pass_entry = false            
+        end
+    end
+
+end
+    
+class Account 
+    def initialize(user)
+        @interface = user.interface
+        @username = user.username
+        @user_data = user.user_data
+        @balance = user.balance
+        @history = user.history
+
     end
 
     def options
-        @choice = ''
-        while @choice != 'exit'
-            puts ''
-            puts "What would you like to do?"
-            puts 'Type "balance" to view your balance'
-            puts 'Type "deposit" to make a deposit'
-            puts 'Type "withdraw" to make a withdrawal'
-            puts 'Type "history" to see transaction history'
-            puts 'Type "exit" to end'
-            puts ''
-            @choice = gets.downcase.chomp    
-        
-        case @choice
+        choice = ''
+        while choice != 'exit'            
+            choice = @interface.menu(['What would you like to do?', 'Type "balance" to view your balance', 'Type "deposit" to make a deposit', 'Type "withdraw" to make a withdrawal', 'Type "history" to see transaction history', 'Type "exit" to end']).downcase
+
+        case choice
             when 'balance'
                 balance
             when 'deposit'
@@ -73,82 +124,61 @@ class Account
             when 'exit'
                 exit_app
             else
-                puts "Sorry, your selection was invalid"
-                puts ''
+                @interface.message( "Sorry, your selection was invalid" )
             end
         end
     end
 
     def balance
-        puts @clear_code
-        print "Your balance is $#{@user_data[@user][:balance]}"
-        puts ''
+        @interface.message( "Your balance is $#{@balance}" )
     end
     
     def deposit
-        puts ''
-        print 'How much would you like to deposit?: '
-        @deposit = gets.chomp.to_i
-        @user_data[@user][:balance] += @deposit
-        puts @clear_code
-        puts "You have successfully deposited $#{@deposit}"
-        puts ''
-        @t = Time.now
-        @history.push(["#{@t.day}/#{@t.mon}/#{@t.year} #{@t.hour}:#{@t.min}.#{@t.sec}", "Deposit: $#{@deposit}"])
+        deposit = @interface.prompt( "How much would you like to deposit?: ").to_i
+        @balance += deposit
+        @interface.message( "You have successfully deposited $#{deposit}" )
+        t = Time.now
+        @history.push(["#{t.day}/#{t.mon}/#{t.year} #{t.hour}:#{t.min}.#{t.sec}", "Deposit: $#{deposit}"])
     end
     
     def withdraw
-        puts ''
-        print 'How much would you like to withdraw?: '
-        @withdraw = gets.chomp.to_i
-        if @withdraw > @user_data[@user][:balance]
-            puts @clear_code
-            puts 'That amount exceeds your balance'
-            puts ''
+        withdraw = @interface.prompt( 'How much would you like to withdraw?: ' ).to_i
+        if withdraw > @balance
+            @interface.message( "That amount exceeds your balance" )
         else
-            @user_data[@user][:balance] -= @withdraw
-            puts @clear_code
-            puts "You have successfully withdrawn $#{@withdraw}"
-            puts ''
-            @t = Time.now
-            @history.push(["#{@t.day}/#{@t.mon}/#{@t.year} #{@t.hour}:#{@t.min}.#{@t.sec}","Withdrawal: $-#{@withdraw}"])
+            @balance -= withdraw
+            @interface.message( "You have successfully withdrawn $#{withdraw}" )
+            t = Time.now
+            @history.push(["#{t.day}/#{t.mon}/#{t.year} #{t.hour}:#{t.min}.#{t.sec}","Withdrawal: $-#{withdraw}"])
         end        
     end
 
     def history
-        puts ''
-        @history.each { |v| 
-        puts v 
-        puts ''
+        @history.each { |transaction| 
+            @interface.list(transaction) 
         }
-        puts ''
     end
 
     def exit_app
-        File.write( 'user_data.txt', JSON.dump(@user_data) ) 
+        @user_data[@username][:balance] = @balance
+        @user_data[@username][:history] = @history
+        File.write( 'user_data.txt', JSON.dump(@user_data) )
         
-        while @final != 'exit'
-            puts ''
-            puts 'To fully exit app, type "exit"'
-            puts 'To change accounts, type "change"'
-            puts ''
+        final = ''
+        while final != 'exit'
+            final = @interface.menu([ 'To fully exit app, type "exit"', 'To change accounts, type "change"' ]).downcase
 
-            @final = gets.chomp.downcase
-
-        case @final
+        case final
             when 'exit'
                 exit
             when 'change'
-                initialize
+                customer = User.new
             else
-                puts "Sorry, your selection was invalid"
-                puts '' 
+                @interface.message( "Sorry, your selection was invalid" )
             end
         end
     end
 
 end
 
-#Consider creating a Customer class, verifying that customer exists (or create new customer) using pass_check method, then keep all other methods in Account class
-#Consider creating a UI class, which can be used to create user input and output
-account = Account.new
+customer = User.new
