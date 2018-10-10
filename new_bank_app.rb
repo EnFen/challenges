@@ -22,7 +22,7 @@ class UI
     end
 
     def menu(array)
-        start_line
+        #start_line
         new_line
         for line in array
             puts line.capitalize
@@ -34,7 +34,7 @@ class UI
     def message(input)
         start_line
         puts input.capitalize
-        sleep(3)
+        #sleep(3)
     end
 
     def list(input)
